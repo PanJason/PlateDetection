@@ -3,7 +3,7 @@ import torch.nn as nn
 from torch.nn import functional as F
 import numpy as np
 
-def cal_iou(anchor,bbox,inside_indices):
+def cal_iou(anchor,bbox):
     """
     Calculate the ious between a set of anchors and a bounding box
     Returns:

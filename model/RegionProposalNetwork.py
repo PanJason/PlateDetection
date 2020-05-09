@@ -13,9 +13,10 @@ def generate_anchor(base_size=7, ratios=[0.5, 1, 2],
         [ymin,xmin,ymax,xmax]. Remember x represents the axis of width and y the \
         axis of height.
     """
+
     py=base_size / 2.
     px=base_size / 2.
-
+    device=torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     anchor_base=np.zeros((len(ratios) * len(anchor_scales), 4),dtype=np.float32)
     for i in range(len(ratios)):
         for j in range(len(anchor_scales)):
@@ -27,7 +28,7 @@ def generate_anchor(base_size=7, ratios=[0.5, 1, 2],
             anchor_base[index, 1] = px - w / 2.
             anchor_base[index, 2] = py + h / 2.
             anchor_base[index, 3] = px + w / 2.
-    return torch.from_numpy(anchor_base)
+    return torch.from_numpy(anchor_base).to(device)
 
 def enumerate_anchor(anchor_base,feat_ratio,height,width):
     """
@@ -36,12 +37,13 @@ def enumerate_anchor(anchor_base,feat_ratio,height,width):
     Returns:
        * **sliding anchor windows**: A tensor of all anchor windows.
     """
+    device=torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     shift_y = torch.arange(0, height * feat_ratio, feat_ratio)
     shift_x = torch.arange(0, width * feat_ratio, feat_ratio)
     shift_x, shift_y = np.meshgrid(shift_x, shift_y)
     shift = np.stack((shift_y.ravel(), shift_x.ravel(),
                       shift_y.ravel(), shift_x.ravel()), axis=1)
-    shift=torch.from_numpy(shift)
+    shift=torch.from_numpy(shift).to(device)
 
     n_fixed_anchor = anchor_base.size()[0]
     n_positions = shift.size()[0]

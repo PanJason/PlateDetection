@@ -7,6 +7,7 @@ import torch
 IM_WIDTH=352
 IM_HEIGHT=240
 
+device=torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 def parse_anno(anno):
     """
@@ -50,7 +51,7 @@ def preprocess():
        * **test_img**: Tensors in shape of :math:`test_set_size \\times channels \\times height \\times width`
        * **test_platetext**: Array of plate texts.
        * **test_bbox**:  Tensors represent the bounding box of the plate. Its shape is\
-       :math:`(R`,4)`. Each line's format is :math:`[xmin,ymin,xmax,ymax]` where x is in\
+       :math:`(R`,4)`. Each line's format is :math:`[ymin,xmin,ymax,xmax]` where x is in\
            the width axis and y is in the height axis.
     """
     train_img_path='.\\Plate_dataset\\AC\\train\\jpeg'
@@ -104,6 +105,6 @@ def preprocess():
     assert train_set_size==len(train_img) and train_set_size==len(train_bbox), 'dimension mismatch!'
     assert test_set_size==len(test_img) and test_set_size==len(test_bbox), 'dimension mismatch!'
 
-    return train_img,train_platetext,train_bbox,test_img,test_platetext,test_bbox
+    return train_img.to(device),train_platetext,train_bbox.to(device),test_img.to(device),test_platetext,test_bbox.to(device)
     
 

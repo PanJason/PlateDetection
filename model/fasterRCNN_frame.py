@@ -21,5 +21,4 @@ class FasterRCNN(nn.Module):
         xFeatured=self.extractor(x)
         rpn_locs,rpn_scores,rois,roi_indices,anchor=self.rpn(xFeatured,x.size()[2:],scale)
         roi_cls_locs,roi_scores=self.head(xFeatured,rois,roi_indices)
-
-
+        return roi_cls_locs,roi_scores,rois,roi_indices
