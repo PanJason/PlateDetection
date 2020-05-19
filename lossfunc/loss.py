@@ -20,3 +20,17 @@ def loc_loss(pred_loc, gt_loc, gt_label, sigma):
     loss = smooth_l1_loss(pred_loc, gt_loc, in_weight.detach(), sigma)
     loss /= ((gt_label >= 0).sum().float())
     return loss
+
+def affine_loss(affine,gt):
+    """
+    This function calculate the loss between predict bbox and the ground truth bbox.
+    """
+    batch_size,_,xH,xW=affine.size()
+    ymin=-0.5*affine[:,0,:,:].unsqueeze(1)-0.5*affine[:,1,:,:].unsqueeze(1)+affine[:,4,:,:].unsqueeze(1)
+    xmin=-0.5*affine[:,3,:,:].unsqueeze(1)-0.5*affine[:,2,:,:].unsqueeze(1)+affine[:,5,:,:].unsqueeze(1)
+    ymax=0.5*affine[:,0,:,:].unsqueeze(1)+0.5*affine[:,1,:,:].unsqueeze(1)+affine[:,4,:,:].unsqueeze(1)
+    xmax=0.5*affine[:,3,:,:].unsqueeze(1)+0.5*affine[:,2,:,:].unsqueeze(1)+affine[:,5,:,:].unsqueeze(1)
+
+    affine_bbox=torch.cat((ymin,xmin,ymax,xmax),dim=1)
+
+    return F.l1_loss(affine_bbox,gt) #here may be some bug without considering the masks.

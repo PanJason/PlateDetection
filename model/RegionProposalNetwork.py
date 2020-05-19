@@ -2,10 +2,10 @@ import torch
 import torch.nn as nn
 from torch.nn import functional as F
 import numpy as np
-from PlateDetection.model.creator import ProposalCreator
+from model.creator import ProposalCreator
 
-def generate_anchor(base_size=7, ratios=[0.5, 1, 2],
-                         anchor_scales=[8, 16, 32]):
+def generate_anchor(base_size=8, ratios=[1.7, 2.25, 2.7],
+                         anchor_scales=[4, 6, 8]):
     """
     This function is to generate base anchors according to the given ratios and scales.
     Returns:
@@ -20,8 +20,8 @@ def generate_anchor(base_size=7, ratios=[0.5, 1, 2],
     anchor_base=np.zeros((len(ratios) * len(anchor_scales), 4),dtype=np.float32)
     for i in range(len(ratios)):
         for j in range(len(anchor_scales)):
-            h = base_size * anchor_scales[j] * np.sqrt(ratios[i])
-            w = base_size * anchor_scales[j] * np.sqrt(1. / ratios[i])
+            h = base_size * anchor_scales[j] * np.sqrt(1. / ratios[i])
+            w = base_size * anchor_scales[j] * np.sqrt(ratios[i])
 
             index = i * len(anchor_scales) + j
             anchor_base[index, 0] = py - h / 2.
@@ -53,8 +53,8 @@ def enumerate_anchor(anchor_base,feat_ratio,height,width):
 
 class RegionProposalNetwork(nn.Module):
     def __init__(self,
-    in_channel=256,mid_channel=256,ratios=[0.5,1,2],anchor_scales=[8,16,32],
-    feat_ratio=16,
+    in_channel=256,mid_channel=256,ratios=[1.7, 2.25, 2.7],anchor_scales=[4, 6, 8],
+    feat_ratio=8,
     ):
         self.anchor=generate_anchor(ratios=ratios,anchor_scales=anchor_scales)
         self.feat_ratio=feat_ratio
@@ -64,6 +64,9 @@ class RegionProposalNetwork(nn.Module):
         self.score=nn.Conv2d(mid_channel,self.n_anchor*2,kernel_size=1,padding=0)
         self.loc=nn.Conv2d(mid_channel,self.n_anchor*4,kernel_size=1,padding=0)
         self.proposal_layer=ProposalCreator()
+        normal_init(self.conv1, 0, 0.01)
+        normal_init(self.score, 0, 0.01)
+        normal_init(self.loc, 0, 0.01)
 
     
     def forward(self,x,img_size,scale=1.0):
@@ -93,3 +96,13 @@ class RegionProposalNetwork(nn.Module):
 
         return rpn_loc,rpn_score,rois,roi_indices,anchor
 
+def normal_init(m, mean, stddev, truncated=False):
+    """
+    weight initalizer: truncated normal and random normal.
+    """
+    # x is a parameter
+    if truncated:
+        m.weight.data.normal_().fmod_(2).mul_(stddev).add_(mean)  # not a perfect approximation
+    else:
+        m.weight.data.normal_(mean, stddev)
+        m.bias.data.zero_()

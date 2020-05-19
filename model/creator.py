@@ -2,16 +2,16 @@ import torch
 import torch.nn as nn
 from torch.nn import functional as F
 import numpy as np
-from PlateDetection.model.utils import widget
+from model.utils import widget
 import random
 
 class ProposalCreator:
     """
-    This class is used to generate 10 ROIs
+    This class is used to generate 50 ROIs
     Returns:
        * **roi**: A tensor represents the regions of Interest
     """
-    def __init__(self, nms_thresh=0.7, n_pre_nms=1000,n_post_nms=50,min_size=16):
+    def __init__(self, nms_thresh=0.7, n_pre_nms=1000,n_post_nms=200,min_size=16):
         self.nms_thresh=nms_thresh
         self.n_pre_nms=n_pre_nms
         self.n_post_nms=n_post_nms
@@ -44,8 +44,8 @@ class ProposalCreator:
         #print(scores_pre_nms)
         #print(roi)
         #Apply nms
-        keep=widget.nms(roi.data,scores_pre_nms.data,self.nms_thresh,self.n_post_nms)
-        roi=roi[keep,:]
+        #keep=widget.nms(roi.data,scores_pre_nms.data,self.nms_thresh,self.n_post_nms)
+        #roi=roi[keep,:]
 
         return roi
 
@@ -60,7 +60,7 @@ class AnchorTargetGenerator:
        back ground object. 
     """
 
-    def __init__(self,n_sample=64,pos_thres=0.6,neg_thres=0.3,pos_ratio=0.5):
+    def __init__(self,n_sample=256,pos_thres=0.6,neg_thres=0.3,pos_ratio=0.5):
         self.n_sample=n_sample
         self.pos_thres=pos_thres
         self.neg_thres=neg_thres

@@ -53,14 +53,19 @@ def train(epoch):#kc1,kc2):
             n_sample=roi_cls_locs.size()[0]
             roi_locs=roi_cls_locs.view(-1,2,4)
             roi_locs=roi_locs[torch.arange(0,n_sample),gt_label]
-
+            max_roi_score=torch.max(roi_scores.data[:,1])
             loss0=loss=F.cross_entropy(rpn_scores[0], trueLabel, ignore_index=-1)
             loss1=F.cross_entropy(roi_scores,gt_label)
             loss2=loc_loss(rpn_locs[0],trueLoc,trueLabel.data,3)
             loss3=loc_loss(roi_locs[0],gt_loc,gt_label.data,1)
 
             loss=loss0+loss1+loss2+loss3
-
+            if (i+1)%100==0:
+                print("loss0:%f"%(loss0.detach().cpu().item()))
+                print("loss1:%f"%(loss1.detach().cpu().item()))
+                print("loss2:%f"%(loss2.detach().cpu().item()))
+                print("loss3:%f"%(loss3.detach().cpu().item()))
+                print("max_roi_score:%f"%(max_roi_score))
             avg_loss += loss.detach().cpu().item()
     
             loss.backward()

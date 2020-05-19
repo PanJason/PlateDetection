@@ -2,8 +2,8 @@ import torch
 import torch.nn as nn
 from torch.nn import functional as F
 import numpy as np
-from PlateDetection.model.utils import widget
-from PlateDetection.model.ROIPooling2d import ROIPooling2d
+from model.utils import widget
+from model.ROIPooling2d import ROIPooling2d
 import random
 
 class ProposalTargetCreator:
@@ -18,7 +18,7 @@ class ProposalTargetCreator:
        * **gt_label**: A tensor representing the corresponding label including background
        label to the sampled rois.
     """
-    def __init__(self,n_sample=8,pos_thres=0.5,neg_thres=0.5,pos_ratio=0.25):
+    def __init__(self,n_sample=128,pos_thres=0.4,neg_thres=0.4,pos_ratio=0.25):
         self.n_sample=n_sample
         self.pos_thres=pos_thres
         self.neg_thres=neg_thres
@@ -40,7 +40,7 @@ class ProposalTargetCreator:
             neg_index=neg_index[random.sample(list(range(0,len(neg_index))),neg_num)]
 
         keep_index=torch.cat((pos_index, neg_index),dim=0)
-        assert len(keep_index)!=0
+        assert len(keep_index)!=0,'index error'
         gt_label[neg_index]=0
         gt_label=gt_label[keep_index]
         sample_roi=rois[keep_index]
@@ -58,7 +58,7 @@ class RCNNHeader(nn.Module):
     classification based on the extracted features.
 
     """
-    def __init__(self,roi_size=5,spatial_scale=1./16):
+    def __init__(self,roi_size=5,spatial_scale=1./8):
         super(RCNNHeader,self).__init__()
         
         self.roi_pooling=ROIPooling2d(roi_size,spatial_scale)

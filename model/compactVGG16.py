@@ -26,7 +26,5 @@ class compactVGG16(nn.Module):
         x=F.relu(self.conv3(x))
         x=F.max_pool2d(x,(2,2))
         x=F.relu(self.conv4(x))
-        x=F.max_pool2d(x,(2,2))
-        x=F.relu(self.conv5(x))
         x=F.relu(self.conv5(x))
         return x
