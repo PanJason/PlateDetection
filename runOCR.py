@@ -20,7 +20,20 @@ f_xml = '.\\Plate_dataset\\AC\\train\\xml'
 BATCHSIZE=8
 EPOCH=10
 LEARNING_RATE=0.001
-
+plates=[]
+plates_gt=[]
+train_path='.\\Chars_data'
+char_map=dict()
+char_map2=dict()
+true=0.
+all_plate = 0.
+all_char = 0.
+right_char = 0.
+wrong_index = []
+wrong_ones = []
+right_five = 0.0
+addition_train = []
+addition_label = []
 
 def find_waves(threshold, histogram):
     """
@@ -229,7 +242,13 @@ def pad_binary_char(plate_binary_img,char_bbox):
         assert character.shape[1]==20
         char_tensor[i,0]=torch.from_numpy(character)
     return char_tensor
+
+
 def predict_label(index):
+    """
+    This function returns the label predicted using heuristics.
+    """
+    global char_map
     s=""
     for i in index:
         s+=char_map[int(i)]
@@ -330,9 +349,9 @@ def validate():
     return avg_loss.detach().cpu().item(), float(total_correct) / len(test_set)
 
 
+
 if __name__ == "__main__":
-    plates=[]
-    plates_gt=[]
+
 
     for file in os.listdir(f_img):
 
@@ -351,9 +370,7 @@ if __name__ == "__main__":
         plates_gt.append(label)
 
 
-    train_path='.\\Chars_data'
-    char_map=dict()
-    char_map2=dict()
+
     for i,dir in enumerate(os.listdir(train_path)):
         char_map[i]=dir
         char_map2[dir]=i
@@ -361,15 +378,7 @@ if __name__ == "__main__":
     net=CNN_adv2()
     net.load_state_dict(torch.load('best_OCR_model_CNN_net_adv2_1.pt'))
 
-    true=0.
-    all_plate = 0.
-    all_char = 0.
-    right_char = 0.
-    wrong_index = []
-    wrong_ones = []
-    right_five = 0.0
-    addition_train = []
-    addition_label = []
+
     for i, plate in enumerate(plates):
         plate_binary_img, plate_Arr = remove_plate_upanddown_border(plate)
         char_bbox = plate_number_bbox(plate_binary_img)
@@ -392,7 +401,7 @@ if __name__ == "__main__":
         for j, s in enumerate(plates_gt[i]):
             right_char += (s == label[j])
             t -= (s != label[j])
-            if s == label[j]:
+            if s == label[j] or (s=="R" and (label[j]=="8" or label[j]=="B" or label[j]=="H") or (s=="B" and (label[j]=="8"))): #Here I mannually add some training data from the wrong judged.
                 addition_train.append(char_tensor[j].numpy())
                 addition_label.append(char_map2[s])
         all_char += len(label)
