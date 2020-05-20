@@ -14,6 +14,8 @@ best_acc=0
 BATCHSIZE=16
 EPOCH=30
 LEARNING_RATE=0.001
+
+
 """
 This is a script to train the basic OCR model. Since the given chars_data set is very much different from those on the plate, we need another model trained directly on the ground truth of
 the plate characters.
@@ -34,18 +36,24 @@ def data_augmentation(train_img,train_label):
     erase=np.random.randint(0,train_img.shape[0],size=(1,4000))
     blur=np.random.randint(0,train_img.shape[0],size=(1,3000))
     sharpen=np.random.randint(0,train_img.shape[0],size=(1,3000))
+
+    #4000 scatter samples
     for i in scatter[0]:
         train_img = np.insert(train_img, train_img.shape[0], values=train_img[i], axis=0)
         train_label=np.insert(train_label,train_label.shape[0],values=train_label[i],axis=0)
-        coord=np.random.randint(0,20,size=(50,2))
+        coord=np.random.randint(0,20,size=(50,2)) #choose 50 noise points on each pic.
         for pos in coord:
             train_img[i,pos[0],pos[1]]=255
+
+    #4000 erase samples
     for i in erase[0]:
         train_img = np.insert(train_img, train_img.shape[0], values=train_img[i], axis=0)
         train_label=np.insert(train_label,train_label.shape[0],values=train_label[i],axis=0)
-        coord=np.random.randint(0,20,size=(50,2))
+        coord=np.random.randint(0,20,size=(50,2)) #choose 50 point to erase its pixel
         for pos in coord:
             train_img[i,pos[0],pos[1]]=0
+
+    #4000 example to zoom out
     for i in zoom_out[0]:
         train_img = np.insert(train_img, train_img.shape[0], values=train_img[i], axis=0)
         train_label=np.insert(train_label,train_label.shape[0],values=train_label[i],axis=0)
@@ -53,12 +61,13 @@ def data_augmentation(train_img,train_label):
         train_img_tmp=cv2.resize(train_img[i],(resize_shape,resize_shape))
         #print(train_img_tmp.shape)
         train_img[i]=cv2.copyMakeBorder(train_img_tmp,(20-resize_shape)//2,20-resize_shape-(20-resize_shape)//2,(20-resize_shape)//2,20-resize_shape-(20-resize_shape)//2,cv2.BORDER_CONSTANT,value=0)
-        coord=np.random.randint(0,20,size=(25,2))
+        coord=np.random.randint(0,20,size=(25,2)) #randomly pick 25 noise pixels.
         for pos in coord:
             train_img[i,pos[0],pos[1]]=255
-        coord1=np.random.randint(0,20,size=(25,2))
+        coord1=np.random.randint(0,20,size=(25,2)) #randomly pick 25 pixels to erase.
         for pos in coord1:
             train_img[i,pos[0],pos[1]]=0
+    #Blurring nad sharpening can also be used. But here they are not considered.
     """
     for i in blur:
         train_img = np.insert(train_img, train_img.shape[0], values=train_img[i], axis=0)
@@ -77,9 +86,10 @@ def data_augmentation(train_img,train_label):
     return train_img,train_label
 
 
+
 def data_preparation(x,y,train_ratio,shuffle=True):
     """
-    This function is to seperate the training dataset from the test dataset.
+    This function is to seperate the training dataset from the test dataset. Default mechanism shuffles the dataset.
     Returns:
     * **training_img**
     * **training_labels**

@@ -98,7 +98,7 @@ if __name__ == "__main__":
         char_map2[dir]=i
     
     #print(char_map)
-
+    #First generate ground truth
     for file in os.listdir(f_img):
     
         img = cv2.imread(f_img+'\\'+file)
@@ -116,10 +116,11 @@ if __name__ == "__main__":
         plates_gt.append(label)
         plate_indx.append(imgID)
 
+    #Then import the trained model
     net=CNN_adv2()
     net.load_state_dict(torch.load('best_OCR_model_CNN_net_adv2_2.pt'))
 
-
+    #Using the trained model to predict the output
     for i,plate in enumerate(plates):
         plate_binary_img,plate_Arr=remove_plate_upanddown_border(plate)
         char_bbox=plate_number_bbox(plate_binary_img)
@@ -156,8 +157,7 @@ if __name__ == "__main__":
             wrong_ones.append(i)
         all_plate+=1
 
-    
-
+    #Write to the xml file
     for i,plate in enumerate(plates_pred):
         doc = Document()
         anno=doc.createElement("annotation")

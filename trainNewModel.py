@@ -78,7 +78,7 @@ def validate():
 if __name__ == "__main__":
     writer=SummaryWriter(PATH)
     device=torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
+    #first prepare training and test dataset.
     train_img,train_platetext,train_bbox,test_img,test_platetext,test_bbox=dataset.preprocess()
     train_bbox_T=torch.zeros((len(train_bbox),4)).to(device)
     train_bbox_T[:,0]=train_bbox[:,1]
@@ -96,6 +96,7 @@ if __name__ == "__main__":
     test_label=gen_out((240,352),16,test_bbox_T)
     test_affine=gen_bbox((240,352),16,test_bbox_T)
 
+    #Then train the plate detection network
     PD=PlateDetector()
     PD.to(device)
     optimizer=optim.Adam(PD.parameters(),lr=LEARNING_RATE,weight_decay=WEIGHT_DECAY)

@@ -38,7 +38,8 @@ addition_label = []
 def find_waves(threshold, histogram):
     """
     This function is used to find peaks of the histogram in horizontal axis.
-
+    Returns:
+    * **wave_peaks**: each list in the wave_peak is in the format of [start_wave, end_wave]
     """
     up_point = -1
     is_peak = False
@@ -61,6 +62,8 @@ def find_waves(threshold, histogram):
 def contain(bbox1,bbox2):
     """
     This function is to judge whether one box was in another.
+    Returns:
+    * **bool**: 1 if a bbox is in another.
     """
     x1,y1,w1,h1=bbox1
     x2,y2,w2,h2=bbox2
@@ -77,6 +80,8 @@ def valid_bbox(bboxes,thres=0.6,thres_up=1.5):
     """
     If there are bboxes whose height is less than 60% of the plate height, these bounding boxes are considered as invalid.
     If there are bboxes inside other bboexes, there are invalid as well.
+    Returns:
+    * **bool**: 1 if bbox is valid.
     """
     heightMax=np.max(bboxes[:,3])
     for b in bboxes:
@@ -92,6 +97,9 @@ def valid_bbox(bboxes,thres=0.6,thres_up=1.5):
 def remove_plate_upanddown_border(plate_Arr):
     """
     This function is used to cut off the useless part of the plate and return a binary plate pic.
+    Returns:
+    * **plate_binary_img**: The Two value form of plate pic.
+    * **plate_Arr**: The plate reshaped and croped in BGR format.
     """
     hh,ww,_=plate_Arr.shape
     plate_gray_Arr = cv2.cvtColor(plate_Arr[4:hh-4,3:ww-3], cv2.COLOR_BGR2GRAY)
@@ -143,6 +151,8 @@ def plate_number_bbox(plate_binary_img,method='cv2'):
     """
     This function returns six bounding boxes of characters on the binary img.
     Different methods including cv2.findcoutours, clusters and analysis of peaks are considered here.
+    Returns:
+    * **char_bbox**: The potential bbox of each character on the plate. Each one is in the format of [x,y,w,h].
     """
 
     if method=='cv2':
@@ -220,6 +230,8 @@ def plate_number_bbox(plate_binary_img,method='cv2'):
 def pad_binary_char(plate_binary_img,char_bbox):
     """
     Returns a tensor in shape of 6*1*20*20 represents 6 bounded characters.
+    Returns:
+    * **char_tensor**: A tensor represent the character. Each one is in the shape of 6*1*20*20.
     """
     char_tensor=torch.zeros((6,1,20,20))
     char_bbox=char_bbox[np.argsort(char_bbox[:,0])]
@@ -247,6 +259,8 @@ def pad_binary_char(plate_binary_img,char_bbox):
 def predict_label(index):
     """
     This function returns the label predicted using heuristics.
+    Returns:
+    * **s**: A string representing the predicted license plate.
     """
     global char_map
     s=""
@@ -352,7 +366,7 @@ def validate():
 
 if __name__ == "__main__":
 
-
+    #Load training data
     for file in os.listdir(f_img):
 
         img = cv2.imread(f_img+'\\'+file)
@@ -370,15 +384,17 @@ if __name__ == "__main__":
         plates_gt.append(label)
 
 
-
+    #Create the map between character and the its indices.
     for i,dir in enumerate(os.listdir(train_path)):
         char_map[i]=dir
         char_map2[dir]=i
 
+    
+    #Load the pretrained OCR model.
     net=CNN_adv2()
     net.load_state_dict(torch.load('best_OCR_model_CNN_net_adv2_1.pt'))
 
-
+    #Predict the label of the training plates
     for i, plate in enumerate(plates):
         plate_binary_img, plate_Arr = remove_plate_upanddown_border(plate)
         char_bbox = plate_number_bbox(plate_binary_img)
@@ -413,16 +429,20 @@ if __name__ == "__main__":
         if t == 0:
             wrong_ones.append(i)
         all_plate += 1
-    
 
+
+    #Create additional training dataset
     addition_train1=torch.from_numpy(np.array(addition_train)).float()
     addition_label=torch.tensor(addition_label).long()
     train_set,train_gt,test_set,test_gt=data_preparation(addition_train1,addition_label,0.8)
 
+
+    #Generate another classification model
     net1=CNN_adv2()
     criterion=nn.NLLLoss()
     optimizer=optim.Adam(net1.parameters(),lr=LEARNING_RATE)
 
+    #Train the model.
     train_set=train_set.to(device)
     train_gt=train_gt.to(device)
     test_set=test_set.to(device)

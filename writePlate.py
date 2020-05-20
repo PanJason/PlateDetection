@@ -30,6 +30,11 @@ writer=SummaryWriter(PATH)
 device=torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 plate_indx=[]
 def WritePlate():
+    """
+    This function generate the predicted bbox using the platedetection network.
+    Returns:
+    * **bbox**: the predicted bbox of each plate.
+    """
     bbox=[]
     for i in range(len(test_img)):
         xProb,xAffine=PD(test_img[i].unsqueeze(0))
@@ -43,18 +48,23 @@ def WritePlate():
     return bbox
 
 if __name__ == "__main__":
+
+    #Prepare the test data
     train_img,train_platetext,train_bbox,test_img,test_platetext,test_bbox=dataset.preprocess()
 
+    #Import the trained model
     PD=PlateDetector()
     PD.to(device)
     PD.load_state_dict(torch.load('models/best_model.pt'))
 
-
+    #Generate output file ID
     for file in os.listdir(f_img):
         imgID=file.split('.')[0]
         plate_indx.append(imgID)
 
     bbox=WritePlate()
+
+    #Write to the xml file
     for i,plate in enumerate(bbox):
         anno_gt = parse(xml_pred+'/'+plate_indx[i]+'.xml')
         obj=anno_gt.getElementsByTagName("object")

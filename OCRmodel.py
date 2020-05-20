@@ -45,6 +45,8 @@ class CNN(nn.Module):
         out=F.log_softmax(out)
         return out
 
+
+#This is the model actually used.
 class CNN_adv2(nn.Module):
     def __init__(self):
         super(CNN_adv2, self).__init__()
